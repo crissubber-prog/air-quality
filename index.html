@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Air Quality</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 80px auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .aqi {
+      font-size: 64px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+
+    .status {
+      font-size: 20px;
+      padding: 10px;
+      border-radius: 8px;
+      display: inline-block;
+    }
+
+    .good { background: #d4edda; color: #155724; }
+    .moderate { background: #fff3cd; color: #856404; }
+    .unhealthy { background: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Air Quality Update</h1>
+  <p>By Cris</p>
+
+  <div class="aqi" id="aqi">--</div>
+  <div class="status" id="status">Loading...</div>
+  <div id="advice"></div>
+  <div id="update"></div>
+</div>
+
+<script>
+  const lat = 13.7563;
+  const lon = 100.5018;
+
+  const apiKey = "d67713408c1a2857fbd6e5b39e69217e";
+
+  async function fetchAQI() {
+    try {
+      const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`);
+      const data = await res.json();
+
+      const aqi = data.list[0].main.aqi;
+      const value = mapAQI(aqi);
+
+      document.getElementById("aqi").textContent = value;
+
+      const status = document.getElementById("status");
+      const advice = document.getElementById("advice");
+
+      if (aqi === 1) {
+        status.textContent = "Good";
+        status.className = "status good";
+        advice.textContent = "Air quality is healthy.";
+      } else if (aqi === 2) {
+        status.textContent = "Moderate";
+        status.className = "status moderate";
+        advice.textContent = "Sensitive people should be careful.";
+      } else {
+        status.textContent = "Unhealthy";
+        status.className = "status unhealthy";
+        advice.textContent = "Limit outdoor activities.";
+      }
+
+      document.getElementById("update").textContent =
+        "Last updated: " + new Date().toLocaleString();
+
+    } catch (e) {
+      document.getElementById("status").textContent = "Error loading data";
+    }
+  }
+
+  function mapAQI(aqi) {
+    return [50, 100, 150, 200, 300][aqi - 1] || "--";
+  }
+
+  fetchAQI();
+  setInterval(fetchAQI, 1800000);
+</script>
+
+</body>
+</html>
+
+
