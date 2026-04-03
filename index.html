@@ -8,6 +8,7 @@
     body {
       font-family: Arial, sans-serif;
       text-align: center;
+      margin: 0;
       transition: background 0.5s ease;
     }
 
@@ -20,21 +21,40 @@
       margin: 80px auto;
       background: white;
       padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      border-radius: 16px;
+      box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+
+    h1 {
+      margin-bottom: 5px;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #555;
+      font-weight: normal;
+    }
+
+    .credit {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 20px;
+      font-style: italic;
     }
 
     .aqi {
-      font-size: 64px;
+      font-size: 72px;
       font-weight: bold;
       margin: 20px 0;
     }
 
     .status {
       font-size: 20px;
-      padding: 10px;
-      border-radius: 8px;
+      padding: 10px 20px;
+      border-radius: 20px;
       display: inline-block;
+      margin-bottom: 15px;
     }
 
     .good { background: #d4edda; color: #155724; }
@@ -42,8 +62,30 @@
     .unhealthy { background: #f8d7da; color: #721c24; }
 
     #details {
+      margin-top: 10px;
+      font-size: 15px;
+      color: #333;
+    }
+
+    #update {
       margin-top: 15px;
+      font-size: 13px;
+      color: #666;
+    }
+
+    .refresh-btn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
       font-size: 14px;
+    }
+
+    .refresh-btn:hover {
+      background: #0056b3;
     }
   </style>
 </head>
@@ -53,12 +95,15 @@
 <div class="container">
   <h1>Air Quality Update</h1>
   <h2>Bangkok</h2>
+  <p class="credit">Created by Cris</p>
 
   <div class="aqi" id="aqi">--</div>
   <div class="status" id="status">Loading...</div>
   <div id="advice"></div>
   <div id="details"></div>
   <div id="update"></div>
+
+  <button class="refresh-btn" onclick="fetchAQI()">Refresh Now</button>
 </div>
 
 <script>
@@ -68,8 +113,14 @@
 
   async function fetchAQI() {
     try {
+      document.getElementById("status").textContent = "Loading...";
+
       const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`);
       const data = await res.json();
+
+      if (!data.list || !data.list[0]) {
+        throw new Error("Invalid API response");
+      }
 
       const aqi = data.list[0].main.aqi;
       const value = mapAQI(aqi);
@@ -83,7 +134,7 @@
       if (aqi === 1) {
         status.textContent = "Good";
         status.className = "status good";
-        advice.textContent = "Air quality is healthy.";
+        advice.textContent = "Air quality is excellent. Enjoy your day!";
         body.className = "good";
 
       } else if (aqi === 2) {
@@ -95,7 +146,7 @@
       } else if (aqi === 3) {
         status.textContent = "Moderate";
         status.className = "status moderate";
-        advice.textContent = "Sensitive people should be careful.";
+        advice.textContent = "Sensitive people should reduce outdoor activity.";
         body.className = "moderate";
 
       } else if (aqi === 4) {
@@ -107,19 +158,20 @@
       } else {
         status.textContent = "Very Poor";
         status.className = "status unhealthy";
-        advice.textContent = "Avoid going outside.";
+        advice.textContent = "Avoid going outside if possible.";
         body.className = "unhealthy";
       }
 
       const comp = data.list[0].components;
       document.getElementById("details").innerHTML =
-        `PM2.5: ${comp.pm2_5} | PM10: ${comp.pm10}`;
+        `PM2.5: ${comp.pm2_5} µg/m³ | PM10: ${comp.pm10} µg/m³`;
 
       document.getElementById("update").textContent =
         "Last updated: " + new Date().toLocaleString();
 
     } catch (e) {
       document.getElementById("status").textContent = "Error loading data";
+      document.getElementById("advice").textContent = "";
     }
   }
 
@@ -128,7 +180,7 @@
   }
 
   fetchAQI();
-  setInterval(fetchAQI, 600000); // every 10 minutes
+  setInterval(fetchAQI, 600000);
 </script>
 
 </body>
