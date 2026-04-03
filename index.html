@@ -144,10 +144,10 @@
       const res = await fetch(`https://api.airvisual.com/v2/nearest_city?lat=${lat}&lon=${lon}&key=${apiKey}`);
       const data = await res.json();
 
-      if (!data.list || !data.list[0]) throw new Error();
+     if (!data.data) throw new Error();
 
-      const aqi = const aqi = data.data.current.pollution.aqius;
-      const value = const value = aqi;
+      const aqi = data.data.current.pollution.aqius;
+      const value = aqi;
 
       document.getElementById("aqi").textContent = value;
 
@@ -156,47 +156,48 @@
       const alertBox = document.getElementById("alert");
       const body = document.body;
 
-      if (aqi === 1) {
-        status.textContent = "Good 😊";
-        status.className = "status good";
-        advice.textContent = "Air quality is excellent. Exercise outdoors freely.";
-        body.className = "good";
-        alertBox.textContent = "";
+      if (aqi <= 50) {
+  status.textContent = "Good 😊";
+  status.className = "status good";
+  advice.textContent = "Air quality is excellent. Exercise outdoors freely.";
+  body.className = "good";
+  alertBox.textContent = "";
 
-      } else if (aqi === 2) {
-        status.textContent = "Fair 😐";
-        status.className = "status moderate";
-        advice.textContent = "Air quality is acceptable. Sensitive people should take care.";
-        body.className = "moderate";
-        alertBox.textContent = "";
+} else if (aqi <= 100) {
+  status.textContent = "Moderate 😐";
+  status.className = "status moderate";
+  advice.textContent = "Air quality is acceptable. Sensitive people should take care.";
+  body.className = "moderate";
+  alertBox.textContent = "";
 
-      } else if (aqi === 3) {
-        status.textContent = "Moderate 😷";
-        status.className = "status moderate";
-        advice.textContent = "Reduce prolonged outdoor activity if sensitive.";
-        body.className = "moderate";
-        alertBox.textContent = "";
+} else if (aqi <= 150) {
+  status.textContent = "Unhealthy for Sensitive Groups 😷";
+  status.className = "status moderate";
+  advice.textContent = "Reduce prolonged outdoor activity.";
+  body.className = "moderate";
+  alertBox.textContent = "";
 
-      } else if (aqi === 4) {
-        status.textContent = "Poor 😷";
-        status.className = "status unhealthy";
-        advice.textContent = "Limit outdoor activities and wear a mask.";
-        body.className = "unhealthy";
-        alertBox.textContent = "⚠️ Health Warning: Air pollution is high!";
+} else if (aqi <= 200) {
+  status.textContent = "Unhealthy 😷";
+  status.className = "status unhealthy";
+  advice.textContent = "Limit outdoor activities and wear a mask.";
+  body.className = "unhealthy";
+  alertBox.textContent = "⚠️ Health Warning: Air pollution is high!";
 
-      } else {
-        status.textContent = "Very Poor 🚨";
-        status.className = "status unhealthy";
-        advice.textContent = "Stay indoors. Use air purifiers and avoid outdoor exposure.";
-        body.className = "unhealthy";
-        alertBox.textContent = "🚨 Severe Warning: Hazardous air quality!";
-      }
+} else {
+  status.textContent = "Very Unhealthy 🚨";
+  status.className = "status unhealthy";
+  advice.textContent = "Stay indoors. Use air purifiers.";
+  body.className = "unhealthy";
+  alertBox.textContent = "🚨 Severe Warning!";
+}
 
-      const comp = data.list[0].components;
-      document.getElementById("details").innerHTML =
-        `PM2.5: ${comp.pm2_5} µg/m³ | PM10: ${comp.pm10} µg/m³`;
+      const pollution = data.data.current.pollution;
 
+document.getElementById("details").innerHTML =
+  `AQI (US): ${pollution.aqius} | Main pollutant: ${pollution.mainus}`;
       document.getElementById("update").textContent =
+        
         "Last updated: " + new Date().toLocaleString();
 
     } catch {
