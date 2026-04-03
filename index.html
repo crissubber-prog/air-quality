@@ -126,7 +126,7 @@
   let lat = 13.7563;
   let lon = 100.5018;
 
-  const apiKey = "d67713408c1a2857fbd6e5b39e69217e";
+  const apiKey = "1994c56a-cc4a-49f9-93ac-6ad8d846fe02";
 
   function changeCity() {
     const value = document.getElementById("citySelect").value;
@@ -141,13 +141,13 @@
       document.getElementById("status").textContent = "Loading...";
       document.getElementById("advice").textContent = "";
 
-      const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`);
+      const res = await fetch(`https://api.airvisual.com/v2/nearest_city?lat=${lat}&lon=${lon}&key=${apiKey}`);
       const data = await res.json();
 
       if (!data.list || !data.list[0]) throw new Error();
 
-      const aqi = data.list[0].main.aqi;
-      const value = [50, 100, 150, 200, 300][aqi - 1];
+      const aqi = const aqi = data.data.current.pollution.aqius;
+      const value = const value = aqi;
 
       document.getElementById("aqi").textContent = value;
 
