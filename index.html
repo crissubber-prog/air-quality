@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Air Quality</title>
+  <title>Air Quality App</title>
 
   <style>
     body {
@@ -23,24 +23,27 @@
       padding: 30px;
       border-radius: 16px;
       box-shadow: 0 15px 30px rgba(0,0,0,0.1);
-      transition: all 0.3s ease;
     }
 
-    h1 {
-      margin-bottom: 5px;
-    }
-
-    h2 {
-      margin-top: 0;
-      color: #555;
-      font-weight: normal;
-    }
+    h1 { margin-bottom: 5px; }
 
     .credit {
       font-size: 14px;
       color: #888;
       margin-bottom: 20px;
       font-style: italic;
+    }
+
+    select {
+      padding: 8px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+    }
+
+    #alert {
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: red;
     }
 
     .aqi {
@@ -64,7 +67,6 @@
     #details {
       margin-top: 10px;
       font-size: 15px;
-      color: #333;
     }
 
     #update {
@@ -81,11 +83,12 @@
       background: #007bff;
       color: white;
       cursor: pointer;
-      font-size: 14px;
     }
 
-    .refresh-btn:hover {
-      background: #0056b3;
+    .refresh-btn:hover { background: #0056b3; }
+
+    .refresh-btn:active {
+      transform: scale(0.95);
     }
   </style>
 </head>
@@ -93,13 +96,26 @@
 <body>
 
 <div class="container">
-  <h1>Air Quality Update</h1>
-  <h2>Bangkok</h2>
+  <h1>Air Quality App</h1>
   <p class="credit">Created by Cris</p>
+
+  <select id="citySelect" onchange="changeCity()">
+    <option value="13.7563,100.5018">Bangkok</option>
+    <option value="51.5074,-0.1278">London</option>
+    <option value="40.7128,-74.0060">New York</option>
+    <option value="35.6895,139.6917">Tokyo</option>
+  </select>
+
+  <div id="alert"></div>
 
   <div class="aqi" id="aqi">--</div>
   <div class="status" id="status">Loading...</div>
-  <div id="advice"></div>
+
+  <div>
+    <strong>What you should do:</strong>
+    <div id="advice"></div>
+  </div>
+
   <div id="details"></div>
   <div id="update"></div>
 
@@ -107,59 +123,74 @@
 </div>
 
 <script>
-  const lat = 13.7563;
-  const lon = 100.5018;
-  const apiKey = "d67713408c1a2857fbd6e5b39e69217e";
+  let lat = 13.7563;
+  let lon = 100.5018;
+
+  const apiKey = "d67713408c1a2857fbd6e5b39e69217e
+";
+
+  function changeCity() {
+    const value = document.getElementById("citySelect").value;
+    const parts = value.split(",");
+    lat = parts[0];
+    lon = parts[1];
+    fetchAQI();
+  }
 
   async function fetchAQI() {
     try {
       document.getElementById("status").textContent = "Loading...";
+      document.getElementById("advice").textContent = "";
 
       const res = await fetch(`https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${apiKey}`);
       const data = await res.json();
 
-      if (!data.list || !data.list[0]) {
-        throw new Error("Invalid API response");
-      }
+      if (!data.list || !data.list[0]) throw new Error();
 
       const aqi = data.list[0].main.aqi;
-      const value = mapAQI(aqi);
+      const value = [50, 100, 150, 200, 300][aqi - 1];
 
       document.getElementById("aqi").textContent = value;
 
       const status = document.getElementById("status");
       const advice = document.getElementById("advice");
+      const alertBox = document.getElementById("alert");
       const body = document.body;
 
       if (aqi === 1) {
-        status.textContent = "Good";
+        status.textContent = "Good 😊";
         status.className = "status good";
-        advice.textContent = "Air quality is excellent. Enjoy your day!";
+        advice.textContent = "Air quality is excellent. Exercise outdoors freely.";
         body.className = "good";
+        alertBox.textContent = "";
 
       } else if (aqi === 2) {
-        status.textContent = "Fair";
+        status.textContent = "Fair 😐";
         status.className = "status moderate";
-        advice.textContent = "Air quality is acceptable.";
+        advice.textContent = "Air quality is acceptable. Sensitive people should take care.";
         body.className = "moderate";
+        alertBox.textContent = "";
 
       } else if (aqi === 3) {
-        status.textContent = "Moderate";
+        status.textContent = "Moderate 😷";
         status.className = "status moderate";
-        advice.textContent = "Sensitive people should reduce outdoor activity.";
+        advice.textContent = "Reduce prolonged outdoor activity if sensitive.";
         body.className = "moderate";
+        alertBox.textContent = "";
 
       } else if (aqi === 4) {
-        status.textContent = "Poor";
+        status.textContent = "Poor 😷";
         status.className = "status unhealthy";
-        advice.textContent = "Limit outdoor activities.";
+        advice.textContent = "Limit outdoor activities and wear a mask.";
         body.className = "unhealthy";
+        alertBox.textContent = "⚠️ Health Warning: Air pollution is high!";
 
       } else {
-        status.textContent = "Very Poor";
+        status.textContent = "Very Poor 🚨";
         status.className = "status unhealthy";
-        advice.textContent = "Avoid going outside if possible.";
+        advice.textContent = "Stay indoors. Use air purifiers and avoid outdoor exposure.";
         body.className = "unhealthy";
+        alertBox.textContent = "🚨 Severe Warning: Hazardous air quality!";
       }
 
       const comp = data.list[0].components;
@@ -169,19 +200,31 @@
       document.getElementById("update").textContent =
         "Last updated: " + new Date().toLocaleString();
 
-    } catch (e) {
+    } catch {
       document.getElementById("status").textContent = "Error loading data";
-      document.getElementById("advice").textContent = "";
+      document.getElementById("advice").textContent = "Check internet or API key.";
     }
   }
 
-  function mapAQI(aqi) {
-    return [50, 100, 150, 200, 300][aqi - 1] || "--";
+  function startApp() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          lat = pos.coords.latitude;
+          lon = pos.coords.longitude;
+          fetchAQI();
+        },
+        () => fetchAQI()
+      );
+    } else {
+      fetchAQI();
+    }
   }
 
-  fetchAQI();
+  startApp();
   setInterval(fetchAQI, 600000);
 </script>
 
 </body>
 </html>
+
