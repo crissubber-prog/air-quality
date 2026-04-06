@@ -106,10 +106,12 @@
       <option value="sensitive">I have sensitivities (asthma, etc.)</option>
     </select>
 
-    <select id="activity">
-      <option value="low">Low outdoor activity</option>
-      <option value="high">High outdoor activity</option>
-    </select>
+    <select id="health">
+  <option value="normal">I'm healthy</option>
+  <option value="sensitive">Respiratory issues (asthma, etc.)</option>
+  <option value="elderly">Elderly</option>
+  <option value="child">Child</option>
+</select>
 
     <button onclick="fetchAQI()">Update Advice</button>
   </div>
@@ -158,14 +160,19 @@ async function fetchAQI() {
 
     let extra = "";
 
-    if (health === "sensitive") {
-      extra += " As someone with sensitivities, you should be extra cautious.";
-    }
+if (health === "sensitive") {
+  extra += " As someone with respiratory issues, even moderate pollution can affect your breathing.";
+} 
+else if (health === "elderly") {
+  extra += " Elderly individuals are more vulnerable to air pollution, so extra caution is strongly advised.";
+} 
+else if (health === "child") {
+  extra += " Children are more sensitive to polluted air, so outdoor exposure should be limited.";
+}
 
-    if (activity === "high") {
-      extra += " Since you're active outdoors, consider reducing exposure.";
-    }
-
+if (activity === "high") {
+  extra += " Since you spend a lot of time outdoors, try to reduce exposure during peak pollution hours.";
+}
     if (aqi <= 50) {
       status.textContent = "Good 😊";
       status.className = "status good";
