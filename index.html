@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Air Quality App</title>
+  <title>Air Quality Pro</title>
 
   <style>
     body {
@@ -17,15 +17,13 @@
     body.unhealthy { background: #f8d7da; }
 
     .container {
-      max-width: 600px;
-      margin: 80px auto;
+      max-width: 650px;
+      margin: 60px auto;
       background: white;
       padding: 30px;
       border-radius: 16px;
       box-shadow: 0 15px 30px rgba(0,0,0,0.1);
     }
-
-    h1 { margin-bottom: 5px; }
 
     .credit {
       font-size: 14px;
@@ -34,20 +32,14 @@
       font-style: italic;
     }
 
-    select {
-      padding: 8px;
+    select, button {
+      padding: 10px;
       margin: 10px;
       border-radius: 8px;
     }
 
-    #alert {
-      font-weight: bold;
-      margin-bottom: 10px;
-      color: red;
-    }
-
     .aqi {
-      font-size: 72px;
+      font-size: 70px;
       font-weight: bold;
       margin: 20px 0;
     }
@@ -57,37 +49,39 @@
       padding: 10px 20px;
       border-radius: 20px;
       display: inline-block;
-      margin-bottom: 15px;
     }
 
     .good { background: #d4edda; color: #155724; }
     .moderate { background: #fff3cd; color: #856404; }
     .unhealthy { background: #f8d7da; color: #721c24; }
 
-    #details { margin-top: 10px; }
-    #update { margin-top: 15px; font-size: 13px; color: #666; }
-
-    .refresh-btn {
-      margin-top: 15px;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      background: #007bff;
-      color: white;
-      cursor: pointer;
+    #alert {
+      font-weight: bold;
+      color: red;
+      margin-bottom: 10px;
     }
 
-    .refresh-btn:hover { background: #0056b3; }
+    #details, #update {
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .form-box {
+      margin-top: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+    }
   </style>
 </head>
 
 <body>
 
 <div class="container">
-  <h1>Air Quality App</h1>
+  <h1>Air Quality Pro</h1>
   <p class="credit">Created by Cris</p>
 
-  <!-- City Selector -->
+  <!-- CITY SELECT -->
   <select id="citySelect" onchange="changeCity()">
     <option value="13.7563,100.5018">Bangkok</option>
     <option value="18.7883,98.9853">Chiang Mai</option>
@@ -96,164 +90,147 @@
     <option value="35.6895,139.6917">Tokyo</option>
   </select>
 
-  <!-- User Type -->
-  <select id="userType" onchange="fetchAQI()">
-    <option value="normal">Normal</option>
-    <option value="asthma">Asthma</option>
-    <option value="athlete">Athlete</option>
-    <option value="elderly">Elderly</option>
-  </select>
-
-  <p id="userLabel"></p>
-
   <div id="alert"></div>
 
   <div class="aqi" id="aqi">--</div>
   <div class="status" id="status">Loading...</div>
 
-  <div>
-    <strong>What you should do:</strong>
-    <div id="advice"></div>
+  <h3>What you should do:</h3>
+  <div id="advice"></div>
+
+  <!-- OPTIONAL FORM -->
+  <div class="form-box">
+    <h4>Personalize Advice (Optional)</h4>
+    <select id="health">
+      <option value="normal">I'm healthy</option>
+      <option value="sensitive">I have sensitivities (asthma, etc.)</option>
+    </select>
+
+    <select id="activity">
+      <option value="low">Low outdoor activity</option>
+      <option value="high">High outdoor activity</option>
+    </select>
+
+    <button onclick="fetchAQI()">Update Advice</button>
   </div>
 
   <div id="details"></div>
   <div id="update"></div>
 
-  <button class="refresh-btn" onclick="fetchAQI()">Refresh Now</button>
+  <button onclick="fetchAQI()">Refresh</button>
 </div>
 
 <script>
-  let lat = 13.7563;
-  let lon = 100.5018;
+let lat = 13.7563;
+let lon = 100.5018;
 
-  const apiKey = "1994c56a-cc4a-49f9-93ac-6ad8d846fe02";
+const apiKey = "1994c56a-cc4a-49f9-93ac-6ad8d846fe02";
 
-  function changeCity() {
-    const value = document.getElementById("citySelect").value;
-    const parts = value.split(",");
-    lat = parts[0];
-    lon = parts[1];
+function changeCity() {
+  const value = document.getElementById("citySelect").value;
+  const parts = value.split(",");
+  lat = parts[0];
+  lon = parts[1];
+  fetchAQI();
+}
+
+async function fetchAQI() {
+  try {
+    document.getElementById("status").textContent = "Loading...";
+
+    const res = await fetch(`https://api.airvisual.com/v2/nearest_city?lat=${lat}&lon=${lon}&key=${apiKey}`);
+    const data = await res.json();
+
+    if (!data.data) throw new Error();
+
+    const pollution = data.data.current.pollution;
+    const aqi = pollution.aqius;
+
+    document.getElementById("aqi").textContent = aqi;
+
+    const status = document.getElementById("status");
+    const advice = document.getElementById("advice");
+    const alertBox = document.getElementById("alert");
+    const body = document.body;
+
+    const health = document.getElementById("health").value;
+    const activity = document.getElementById("activity").value;
+
+    let extra = "";
+
+    if (health === "sensitive") {
+      extra += " As someone with sensitivities, you should be extra cautious.";
+    }
+
+    if (activity === "high") {
+      extra += " Since you're active outdoors, consider reducing exposure.";
+    }
+
+    if (aqi <= 50) {
+      status.textContent = "Good 😊";
+      status.className = "status good";
+      body.className = "good";
+      alertBox.textContent = "";
+      advice.textContent = "Air quality is excellent. You can safely exercise outdoors and keep windows open." + extra;
+
+    } else if (aqi <= 100) {
+      status.textContent = "Moderate 😐";
+      status.className = "status moderate";
+      body.className = "moderate";
+      alertBox.textContent = "";
+      advice.textContent = "Air quality is acceptable, but there may be a risk for sensitive individuals. Consider limiting prolonged outdoor activities." + extra;
+
+    } else if (aqi <= 150) {
+      status.textContent = "Unhealthy for Sensitive Groups 😷";
+      status.className = "status moderate";
+      body.className = "moderate";
+      alertBox.textContent = "";
+      advice.textContent = "People with respiratory issues should reduce outdoor exertion. Wearing a mask outdoors is recommended." + extra;
+
+    } else if (aqi <= 200) {
+      status.textContent = "Unhealthy 😷";
+      status.className = "status unhealthy";
+      body.className = "unhealthy";
+      alertBox.textContent = "⚠️ Health Warning!";
+      advice.textContent = "Everyone may begin to experience health effects. Limit outdoor exposure, wear a mask, and consider using an air purifier indoors." + extra;
+
+    } else {
+      status.textContent = "Very Unhealthy 🚨";
+      status.className = "status unhealthy";
+      body.className = "unhealthy";
+      alertBox.textContent = "🚨 Severe Air Pollution!";
+      advice.textContent = "Avoid outdoor activities completely. Stay indoors with air purification if possible. Keep windows closed." + extra;
+    }
+
+    document.getElementById("details").innerHTML =
+      `AQI: ${aqi} | Main pollutant: ${pollution.mainus}`;
+
+    document.getElementById("update").textContent =
+      "Last updated: " + new Date().toLocaleString();
+
+  } catch {
+    document.getElementById("status").textContent = "Error loading data";
+    document.getElementById("advice").textContent = "Check API key or internet.";
+  }
+}
+
+function startApp() {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        lat = pos.coords.latitude;
+        lon = pos.coords.longitude;
+        fetchAQI();
+      },
+      () => fetchAQI()
+    );
+  } else {
     fetchAQI();
   }
+}
 
-  async function fetchAQI() {
-    try {
-      const userType = document.getElementById("userType").value;
-
-      document.getElementById("status").textContent = "Loading...";
-      document.getElementById("advice").textContent = "";
-
-      const res = await fetch(`https://api.airvisual.com/v2/nearest_city?lat=${lat}&lon=${lon}&key=${apiKey}`);
-      const data = await res.json();
-
-      if (!data.data) throw new Error();
-
-      const aqi = data.data.current.pollution.aqius;
-
-      document.getElementById("aqi").textContent = aqi;
-      document.getElementById("userLabel").textContent = "Advice for: " + userType;
-
-      const status = document.getElementById("status");
-      const advice = document.getElementById("advice");
-      const alertBox = document.getElementById("alert");
-      const body = document.body;
-
-      function setAdvice(general, athlete, asthma, elderly) {
-        if (userType === "athlete") return athlete;
-        if (userType === "asthma") return asthma;
-        if (userType === "elderly") return elderly;
-        return general;
-      }
-
-      if (aqi <= 50) {
-        status.textContent = "Good 😊";
-        status.className = "status good";
-        advice.textContent = setAdvice(
-          "Great air quality. Enjoy outside!",
-          "Perfect for outdoor training.",
-          "Safe, but carry inhaler.",
-          "Nice day for a walk."
-        );
-        body.className = "good";
-        alertBox.textContent = "";
-
-      } else if (aqi <= 100) {
-        status.textContent = "Moderate 😐";
-        status.className = "status moderate";
-        advice.textContent = setAdvice(
-          "Air is okay. Limit long exposure.",
-          "Light training only.",
-          "Be cautious outdoors.",
-          "Avoid long outdoor time."
-        );
-        body.className = "moderate";
-        alertBox.textContent = "";
-
-      } else if (aqi <= 150) {
-        status.textContent = "Unhealthy (Sensitive) 😷";
-        status.className = "status moderate";
-        advice.textContent = setAdvice(
-          "Reduce outdoor activity.",
-          "Avoid outdoor workouts.",
-          "Stay indoors if possible.",
-          "Avoid going outside."
-        );
-
-      } else if (aqi <= 200) {
-        status.textContent = "Unhealthy 😷";
-        status.className = "status unhealthy";
-        advice.textContent = setAdvice(
-          "Wear a mask outside.",
-          "No outdoor training.",
-          "Stay indoors.",
-          "Avoid outside completely."
-        );
-        body.className = "unhealthy";
-        alertBox.textContent = "⚠️ High pollution!";
-
-      } else {
-        status.textContent = "Very Unhealthy 🚨";
-        status.className = "status unhealthy";
-        advice.textContent = setAdvice(
-          "Stay indoors.",
-          "Cancel all outdoor activity.",
-          "Dangerous air. Stay inside.",
-          "Stay inside at all times."
-        );
-        body.className = "unhealthy";
-        alertBox.textContent = "🚨 Severe pollution!";
-      }
-
-      const pollution = data.data.current.pollution;
-      document.getElementById("details").innerHTML =
-        `AQI: ${pollution.aqius} | Main pollutant: ${pollution.mainus}`;
-
-      document.getElementById("update").textContent =
-        "Last updated: " + new Date().toLocaleString();
-
-    } catch {
-      document.getElementById("status").textContent = "Error loading data";
-      document.getElementById("advice").textContent = "Check API key or internet.";
-    }
-  }
-
-  function startApp() {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          lat = pos.coords.latitude;
-          lon = pos.coords.longitude;
-          fetchAQI();
-        },
-        () => fetchAQI()
-      );
-    } else {
-      fetchAQI();
-    }
-  }
-
-  startApp();
-  setInterval(fetchAQI, 600000);
+startApp();
+setInterval(fetchAQI, 600000);
 </script>
 
 </body>
