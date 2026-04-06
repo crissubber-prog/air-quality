@@ -101,16 +101,18 @@
   <!-- OPTIONAL FORM -->
   <div class="form-box">
     <h4>Personalize Advice (Optional)</h4>
-    <select id="health">
-      <option value="normal">I'm healthy</option>
-      <option value="sensitive">I have sensitivities (asthma, etc.)</option>
-    </select>
-
+   
     <select id="health">
   <option value="normal">I'm healthy</option>
   <option value="sensitive">Respiratory issues (asthma, etc.)</option>
   <option value="elderly">Elderly</option>
   <option value="child">Child</option>
+</select>
+    
+    <select id="activity">
+  <option value="low">Mostly indoors</option>
+  <option value="medium">Some outdoor activity</option>
+  <option value="high">Very active outdoors</option>
 </select>
 
     <button onclick="fetchAQI()">Update Advice</button>
