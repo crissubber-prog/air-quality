@@ -1,81 +1,93 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Air Quality Pro</title>
+<meta charset="UTF-8">
+<title>Air Quality Pro</title>
+
+<!-- Google Font -->
 <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600&display=swap" rel="stylesheet">
-  <style>
-    body {
+
+<style>
+body {
   font-family: 'Lexend', sans-serif;
   text-align: center;
   margin: 0;
-  background: linear-gradient(135deg, #eef2ff, #f8fafc);
+  transition: background 0.5s ease;
 }
-    }
 
-    body.good { background: #d4edda; }
-    body.moderate { background: #fff3cd; }
-    body.unhealthy { background: #f8d7da; }
+/* Background states */
+body.good { background: #d4edda; }
+body.moderate { background: #fff3cd; }
+body.unhealthy { background: #f8d7da; }
 
-    .container {
+/* Container */
+.container {
   max-width: 650px;
   margin: 60px auto;
-  background: rgba(255, 255, 255, 0.85);
-  padding: 35px;
-  border-radius: 20px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-  animation: fadeIn 0.6s ease;
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 15px 30px rgba(0,0,0,0.1);
 }
 
-    .credit {
-      font-size: 14px;
-      color: #888;
-      margin-bottom: 20px;
-      font-style: italic;
-    }
+/* Credit */
+.credit {
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 20px;
+}
 
-    select, button {
-      padding: 10px;
-      margin: 10px;
-      border-radius: 8px;
-    }
+/* Buttons & inputs */
+select, button {
+  padding: 10px;
+  margin: 10px;
+  border-radius: 8px;
+  border: none;
+  font-family: inherit;
+}
 
-    .aqi {
-      font-size: 70px;
-      font-weight: bold;
-      margin: 20px 0;
-    }
+/* Location button */
+.location-btn {
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  color: white;
+  cursor: pointer;
+}
 
-    .status {
-      font-size: 20px;
-      padding: 10px 20px;
-      border-radius: 20px;
-      display: inline-block;
-    }
+.location-btn:hover {
+  transform: scale(1.05);
+}
 
-    .good { background: #d4edda; color: #155724; }
-    .moderate { background: #fff3cd; color: #856404; }
-    .unhealthy { background: #f8d7da; color: #721c24; }
+/* AQI display */
+.aqi {
+  font-size: 70px;
+  font-weight: bold;
+  margin: 20px 0;
+}
 
-    #alert {
-      font-weight: bold;
-      color: red;
-      margin-bottom: 10px;
-    }
+.status {
+  font-size: 20px;
+  padding: 10px 20px;
+  border-radius: 20px;
+  display: inline-block;
+}
 
-    #details, #update {
-      margin-top: 10px;
-      font-size: 14px;
-    }
+.good { background: #d4edda; color: #155724; }
+.moderate { background: #fff3cd; color: #856404; }
+.unhealthy { background: #f8d7da; color: #721c24; }
 
-    .form-box {
-      margin-top: 20px;
-      padding: 15px;
-      border: 1px solid #ddd;
-      border-radius: 10px;
-    }
-  </style>
+#alert {
+  font-weight: bold;
+  color: red;
+}
+
+/* Form box */
+.form-box {
+  margin-top: 20px;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+}
+</style>
 </head>
 
 <body>
@@ -93,6 +105,11 @@
     <option value="35.6895,139.6917">Tokyo</option>
   </select>
 
+  <!-- LOCATION BUTTON -->
+  <button class="location-btn" onclick="useMyLocation()">
+    📍 Use My Location
+  </button>
+
   <div id="alert"></div>
 
   <div class="aqi" id="aqi">--</div>
@@ -104,19 +121,18 @@
   <!-- OPTIONAL FORM -->
   <div class="form-box">
     <h4>Personalize Advice (Optional)</h4>
-   
+
     <select id="health">
-  <option value="normal">I'm healthy</option>
-  <option value="sensitive">Respiratory issues (asthma, etc.)</option>
-  <option value="elderly">Elderly</option>
-  <option value="child">Child</option>
-</select>
-    
+      <option value="normal">I'm healthy</option>
+      <option value="sensitive">Respiratory issues</option>
+      <option value="elderly">Elderly</option>
+      <option value="child">Child</option>
+    </select>
+
     <select id="activity">
-  <option value="low">Mostly indoors</option>
-  <option value="medium">Some outdoor activity</option>
-  <option value="high">Very active outdoors</option>
-</select>
+      <option value="low">Mostly indoors</option>
+      <option value="high">Very active outdoors</option>
+    </select>
 
     <button onclick="fetchAQI()">Update Advice</button>
   </div>
@@ -133,14 +149,32 @@ let lon = 100.5018;
 
 const apiKey = "1994c56a-cc4a-49f9-93ac-6ad8d846fe02";
 
+/* Change city */
 function changeCity() {
   const value = document.getElementById("citySelect").value;
-  const parts = value.split(",");
-  lat = parts[0];
-  lon = parts[1];
+  [lat, lon] = value.split(",");
   fetchAQI();
 }
 
+/* Use location */
+function useMyLocation() {
+  document.getElementById("status").textContent = "Getting your location...";
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        lat = pos.coords.latitude;
+        lon = pos.coords.longitude;
+        fetchAQI();
+      },
+      () => alert("Location access denied")
+    );
+  } else {
+    alert("Geolocation not supported");
+  }
+}
+
+/* Fetch AQI */
 async function fetchAQI() {
   try {
     document.getElementById("status").textContent = "Loading...";
@@ -160,62 +194,63 @@ async function fetchAQI() {
     const alertBox = document.getElementById("alert");
     const body = document.body;
 
-    const health = document.getElementById("health").value;
-    const activity = document.getElementById("activity").value;
+    /* Form values (optional safe defaults) */
+    const health = document.getElementById("health")?.value || "normal";
+    const activity = document.getElementById("activity")?.value || "low";
 
     let extra = "";
 
-if (health === "sensitive") {
-  extra += " As someone with respiratory issues, even moderate pollution can affect your breathing.";
-} 
-else if (health === "elderly") {
-  extra += " Elderly individuals are more vulnerable to air pollution, so extra caution is strongly advised.";
-} 
-else if (health === "child") {
-  extra += " Children are more sensitive to polluted air, so outdoor exposure should be limited.";
-}
+    if (health === "sensitive") {
+      extra += " You may experience breathing discomfort even at moderate levels.";
+    } else if (health === "elderly") {
+      extra += " Older adults are at higher risk — limit exposure and stay indoors when possible.";
+    } else if (health === "child") {
+      extra += " Children are more vulnerable — reduce outdoor play in poor air.";
+    }
 
-if (activity === "high") {
-  extra += " Since you spend a lot of time outdoors, try to reduce exposure during peak pollution hours.";
-}
+    if (activity === "high") {
+      extra += " Since you're active outdoors, consider reducing intensity or duration.";
+    }
+
+    /* AQI levels */
     if (aqi <= 50) {
       status.textContent = "Good 😊";
       status.className = "status good";
       body.className = "good";
       alertBox.textContent = "";
-      advice.textContent = "Air quality is excellent. You can safely exercise outdoors and keep windows open." + extra;
+      advice.textContent = "Air quality is excellent. Enjoy outdoor activities freely." + extra;
 
     } else if (aqi <= 100) {
       status.textContent = "Moderate 😐";
       status.className = "status moderate";
       body.className = "moderate";
       alertBox.textContent = "";
-      advice.textContent = "Air quality is acceptable, but there may be a risk for sensitive individuals. Consider limiting prolonged outdoor activities." + extra;
+      advice.textContent = "Air is acceptable, but sensitive individuals should take caution." + extra;
 
     } else if (aqi <= 150) {
-      status.textContent = "Unhealthy for Sensitive Groups 😷";
+      status.textContent = "Unhealthy for Sensitive 😷";
       status.className = "status moderate";
       body.className = "moderate";
       alertBox.textContent = "";
-      advice.textContent = "People with respiratory issues should reduce outdoor exertion. Wearing a mask outdoors is recommended." + extra;
+      advice.textContent = "Sensitive groups should limit outdoor exposure." + extra;
 
     } else if (aqi <= 200) {
       status.textContent = "Unhealthy 😷";
       status.className = "status unhealthy";
       body.className = "unhealthy";
       alertBox.textContent = "⚠️ Health Warning!";
-      advice.textContent = "Everyone may begin to experience health effects. Limit outdoor exposure, wear a mask, and consider using an air purifier indoors." + extra;
+      advice.textContent = "Limit outdoor activity. Consider masks and air purifiers." + extra;
 
     } else {
       status.textContent = "Very Unhealthy 🚨";
       status.className = "status unhealthy";
       body.className = "unhealthy";
-      alertBox.textContent = "🚨 Severe Air Pollution!";
-      advice.textContent = "Avoid outdoor activities completely. Stay indoors with air purification if possible. Keep windows closed." + extra;
+      alertBox.textContent = "🚨 Severe Pollution!";
+      advice.textContent = "Stay indoors. Avoid outdoor exposure completely." + extra;
     }
 
     document.getElementById("details").innerHTML =
-      `AQI: ${aqi} | Main pollutant: ${pollution.mainus}`;
+      `AQI: ${aqi} | Pollutant: ${pollution.mainus}`;
 
     document.getElementById("update").textContent =
       "Last updated: " + new Date().toLocaleString();
@@ -226,24 +261,11 @@ if (activity === "high") {
   }
 }
 
-function startApp() {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        lat = pos.coords.latitude;
-        lon = pos.coords.longitude;
-        fetchAQI();
-      },
-      () => fetchAQI()
-    );
-  } else {
-    fetchAQI();
-  }
-}
-
-startApp();
+/* Start */
+fetchAQI();
 setInterval(fetchAQI, 600000);
 </script>
 
 </body>
 </html>
+
